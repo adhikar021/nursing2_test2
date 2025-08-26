@@ -1,0 +1,161 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NursingQuiz - Daily MCQs</title>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>NursingQuiz</h1>
+      <nav>
+        <a class="btn" href="payment.html">Pay Entry ₹10</a>
+        <a class="btn" href="admin.html">Admin</a>
+        <a class="btn" href="results.html">Results</a>
+      </nav>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <label for="username">Name</label>
+        <input id="username" placeholder="Your name">
+      </div>
+      <div class="row">
+        <label for="quizDate">Quiz Date</label>
+        <input id="quizDate" type="date">
+        <button id="loadBtn" class="btn">Load Today's 10 MCQs</button>
+      </div>
+      <p class="small">Blue‑green nursing theme • Mobile-friendly • Answers shown after submit</p>
+    </section>
+
+    <section id="quizBox" class="card hidden"></section>
+    <section id="resultBox" class="card hidden"></section>
+    <section id="leaderboardBox" class="card hidden"></section>
+
+    <footer class="footer">© NursingQuiz</footer>
+  </div>
+
+  <script>
+    window.NQ_CONFIG = {
+      API_BASE: "http://localhost:5000",
+      UPI_ID: "test@upi.com",
+      UPI_PN: "NursingQuiz",
+      UPI_AMOUNT: "10",
+      UPI_CURRENCY: "INR"
+    };
+  </script>
+  <script type="module">
+    import { fetchQuestions, submitAnswers, leaderboard, formatTime } from './app.js';
+    const usernameEl = document.getElementById('username');
+    const dateEl = document.getElementById('quizDate');
+    const quizBox = document.getElementById('quizBox');
+    const resultBox = document.getElementById('resultBox');
+    const leaderboardBox = document.getElementById('leaderboardBox');
+    const loadBtn = document.getElementById('loadBtn');
+
+    const todayStr = new Date().toISOString().slice(0,10);
+    dateEl.value = todayStr;
+    usernameEl.value = localStorage.getItem('nq_username') || '';
+
+    let currentQs = [];
+    let timerId = null;
+    let seconds = 0;
+
+    loadBtn.addEventListener('click', loadQuestions);
+
+    async function loadQuestions(){
+      const data = await fetchQuestions(dateEl.value);
+      if (!data.questions || data.questions.length === 0){
+        quizBox.classList.remove('hidden');
+        quizBox.innerHTML = `<p>No questions scheduled for <b>${dateEl.value}</b>. Ask admin to upload CSV for that date.</p>`;
+        return;
+      }
+      currentQs = data.questions;
+      renderQuiz(currentQs);
+      startTimer();
+    }
+
+    function startTimer(){
+      clearInterval(timerId);
+      seconds = 0;
+      timerId = setInterval(() => {
+        seconds += 1;
+        const t = document.getElementById('timer');
+        if (t) t.textContent = formatTime(seconds);
+      }, 1000);
+    }
+
+    function renderQuiz(questions){
+      quizBox.classList.remove('hidden');
+      resultBox.classList.add('hidden');
+      leaderboardBox.classList.add('hidden');
+      const timeRow = `<div class="small">Timer: <span id="timer">00:00</span></div>`;
+      const blocks = questions.map((q,i) => `
+        <div class="q">
+          <div><b>${i+1}.</b> ${q.que}</div>
+          <div class="opts">
+            ${['a','b','c','d'].map(k => `
+              <label class="opt">
+                <input type="radio" name="q${i}" value="${k.toUpperCase()}">
+                <span>${k.toUpperCase()}.</span> <span>${q[k]}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+      quizBox.innerHTML = `${timeRow}${blocks}<button id="submitBtn" class="btn">Submit Answers</button>`;
+      document.getElementById('submitBtn').addEventListener('click', submitNow);
+    }
+
+    async function submitNow(){
+      clearInterval(timerId);
+      const name = (usernameEl.value || 'Guest').trim();
+      localStorage.setItem('nq_username', name);
+      const answers = currentQs.map((_, i) => {
+        const checked = document.querySelector(`input[name="q${i}"]:checked`);
+        return checked ? checked.value : '';
+      });
+      const payload = { username: name, answers, date: dateEl.value, timeTakenSeconds: seconds };
+      const res = await submitAnswers(payload);
+      renderResult(res);
+      loadLeaderboard();
+    }
+
+
+    function renderResult(result){
+  resultBox.classList.remove('hidden');
+  const { score=0, total=0, details=[] } = result;
+  const rows = details.map((d,i) => {
+    const badge = d.correct ? '<span class="badge correct">Correct</span>' : '<span class="badge wrong">Wrong</span>';
+    return `
+      <div class="q">
+        <div><b>${i+1}.</b> ${d.que} ${badge}</div>
+        <div class="small">Your answer: ${d.userAns || '-'} • Correct: ${d.ans}</div>
+      </div>
+    `;
+  }).join('');
+  resultBox.innerHTML = `
+    <h2>Result</h2>
+    <p><b>Score:</b> ${score} / ${total} • <b>Time:</b> ${formatTime(seconds)}</p>
+    ${rows}
+  `;
+}
+
+async function loadLeaderboard(){
+  const data = await leaderboard(dateEl.value);
+  leaderboardBox.classList.remove('hidden');
+  const items = (data.top || []).map((s, i) => `
+    <div class="q"><b>${i+1}.</b> ${s.username} — ${s.score} / 10 • ${formatTime(s.timeTakenSeconds)}</div>
+  `).join('');
+  leaderboardBox.innerHTML = `
+    <h2>Today's Top Scores</h2>
+    ${items || '<p>No submissions yet.</p>'}
+  `;
+}
+
+  </script>
+</body>
+</html>

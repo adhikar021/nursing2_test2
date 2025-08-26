@@ -1,0 +1,39 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login • NursingQuiz</title>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Login</h1>
+      <nav>
+        <a class="btn" href="index.html">Quiz</a>
+      </nav>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <label>Name</label>
+        <input id="name" placeholder="Your name">
+        <button id="save" class="btn">Save</button>
+      </div>
+      <p class="small">Demo login only stores your name in this browser (localStorage).</p>
+    </section>
+
+    <footer class="footer">© NursingQuiz</footer>
+  </div>
+  <script>
+    document.getElementById('save').addEventListener('click', ()=>{
+      const v = document.getElementById('name').value.trim();
+      if(!v){ alert('Enter name'); return; }
+      localStorage.setItem('nq_username', v);
+      alert('Saved. Now go back to Quiz page.');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Results • NursingQuiz</title>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Results & Leaderboard</h1>
+      <nav>
+        <a class="btn" href="index.html">Quiz</a>
+      </nav>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <label for="date">Date</label>
+        <input id="date" type="date">
+        <button id="load" class="btn">Load Leaderboard</button>
+      </div>
+    </section>
+
+    <section id="list" class="card hidden"></section>
+
+    <footer class="footer">© NursingQuiz</footer>
+  </div>
+
+  <script>
+    // API base configuration
+    window.NQ_CONFIG = { API_BASE: "http://localhost:5000" };
+  </script>
+
+  <script type="module">
+    import { leaderboard, formatTime } from './app.js';
+
+    const dateEl = document.getElementById('date');
+    const list = document.getElementById('list');
+    const loadBtn = document.getElementById('load');
+
+    // Default date = today
+    dateEl.value = new Date().toISOString().slice(0, 10);
+
+    loadBtn.addEventListener('click', async () => {
+      try {
+        const data = await leaderboard(dateEl.value);
+        list.classList.remove('hidden');
+
+        const items = (data.top || []).map((s, i) => `
+          <div class="q">
+            <b>${i + 1}.</b> ${s.username} — ${s.score}/10 • ${formatTime(s.timeTakenSeconds)}
+          </div>
+        `).join('');
+
+        list.innerHTML = `
+          <h2>Top Scores for ${data.date}</h2>
+          ${items || '<p>No submissions yet.</p>'}
+        `;
+      } catch (err) {
+        console.error("Error loading leaderboard:", err);
+        list.classList.remove('hidden');
+        list.innerHTML = `<p class="error">Failed to load leaderboard. Please try again later.</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

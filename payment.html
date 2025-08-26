@@ -1,0 +1,47 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment • NursingQuiz</title>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Payment</h1>
+      <nav>
+        <a class="btn" href="index.html">Back to Quiz</a>
+      </nav>
+    </header>
+
+    <section class="card center">
+      <h2>Pay Entry Fee</h2>
+      <p>Amount: <b>₹10</b></p>
+      <p class="small">UPI ID: <span id="upiId">test@upi.com</span></p>
+      <p><a class="btn secondary" id="upiLink" href="#" target="_blank">Pay via UPI App</a></p>
+      <p class="small">This is a test link. Replace UPI ID in code when going live.</p>
+    </section>
+
+    <footer class="footer">© NursingQuiz</footer>
+  </div>
+  <script>
+    window.NQ_CONFIG = {
+      API_BASE: "http://localhost:5000",
+      UPI_ID: "9579596185-2@ybl",
+      UPI_PN: "NursingQuiz",
+      UPI_AMOUNT: "10",
+      UPI_CURRENCY: "INR"
+    };
+  </script>
+  <script type="module">
+    import { upiUrl } from './app.js';
+    const cfg = window.NQ_CONFIG;
+    const link = document.getElementById('upiLink');
+    const upiIdSpan = document.getElementById('upiId');
+    upiIdSpan.textContent = cfg.UPI_ID;
+    link.href = upiUrl({ pa: cfg.UPI_ID, pn: cfg.UPI_PN, am: cfg.UPI_AMOUNT, cu: cfg.UPI_CURRENCY });
+  </script>
+</body>
+</html>

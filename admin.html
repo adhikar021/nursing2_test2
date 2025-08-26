@@ -1,0 +1,54 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin • NursingQuiz</title>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Admin Panel</h1>
+      <nav>
+        <a class="btn" href="index.html">Quiz</a>
+      </nav>
+    </header>
+
+    <section class="card">
+      <h2>Bulk Upload Questions (CSV)</h2>
+      <form id="uploadForm">
+        <div class="row">
+          <label>CSV File</label>
+          <input type="file" id="csvFile" accept=".csv">
+          <button class="btn" type="submit">Upload</button>
+        </div>
+        <p class="small">Format: <code>date,que,a,b,c,d,ans</code> • Example date: 2025-08-19</p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Sample CSV</h2>
+      <pre class="small">date,que,a,b,c,d,ans
+2025-08-19,What is the normal body temperature of a healthy adult in Celsius?,35°C,36°C,37°C,38°C,C</pre>
+    </section>
+
+    <footer class="footer">© NursingQuiz</footer>
+  </div>
+  <script>
+    window.NQ_CONFIG = { API_BASE: "http://localhost:5000" };
+  </script>
+  <script type="module">
+    import { uploadCsv } from './app.js';
+    const form = document.getElementById('uploadForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const file = document.getElementById('csvFile').files[0];
+      if(!file){ alert('Please choose a CSV file.'); return; }
+      const res = await uploadCsv(file);
+      alert(res.message || JSON.stringify(res));
+    });
+  </script>
+</body>
+</html>
